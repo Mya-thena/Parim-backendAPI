@@ -1,53 +1,202 @@
 const User = require("../user/user.module");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { sendOtpMail } = require("../../services/mail.service");
 
-// REGISTER
-exports.register = async (req, res) => {
+/* =======================
+   CREATE ACCOUNT
+======================= */
+exports.createAccount = async (req, res) => {
   try {
-    const { fullName, email, password, role } = req.body;
+    const {
+      fullName,
+      mail,
+      phoneNumber,
+      createPassword,
+      confirmPassword
+    } = req.body;
 
-    // Check if user exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ success: false, message: "Email already exists" });
+    if (!fullName || !mail || !phoneNumber || !createPassword || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required"
+      });
+    }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    if (createPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Passwords do not match"
+      });
+    }
 
-    // Create user
-    const user = await User.create({ fullName, email, password: hashedPassword, role });
+    const existingUser = await User.findOne({ mail });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "Mail already exists"
+      });
+    }
 
-    res.status(201).json({
-      success: true,
-      message: "User registered successfully",
-      data: { userId: user._id },
+    const hashedPassword = await bcrypt.hash(createPassword, 10);
+
+    await User.create({
+      fullName,
+      mail,
+      phoneNumber,
+      password: hashedPassword,
+      isVerified: false
     });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+
+    return res.status(201).json({
+      success: true,
+      message: "Account created successfully. Please verify your email."
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 
-// LOGIN
+/* =======================
+   SEND OTP
+======================= */
+exports.sendOtp = async (req, res) => {
+  try {
+    const { mail } = req.body;
+
+    const user = await User.findOne({ mail });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "Account already verified"
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    user.otp = otp;
+    user.otpExpiresAt = Date.now() + 10 * 60 * 1000;
+    await user.save();
+
+    await sendOtpMail(user.mail, otp);
+
+    return res.json({
+      success: true,
+      message: "OTP sent to your email"
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+/* =======================
+   VERIFY OTP
+======================= */
+exports.verifyOtp = async (req, res) => {
+  try {
+    const { mail, otp } = req.body;
+
+    const user = await User.findOne({ mail });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    if (user.otp !== otp || user.otpExpiresAt < Date.now()) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired OTP"
+      });
+    }
+
+    user.isVerified = true;
+    user.otp = null;
+    user.otpExpiresAt = null;
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: "Account verified successfully"
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+/* =======================
+   LOGIN
+======================= */
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { mail, password } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ success: false, message: "Invalid credentials" });
+    const user = await User.findOne({ mail });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid credentials"
+      });
+    }
+
+    if (!user.isVerified) {
+      return res.status(403).json({
+        success: false,
+        message: "Please verify your email"
+      });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ success: false, message: "Invalid credentials" });
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid credentials"
+      });
+    }
 
-    // Generate JWT
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1d" });
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
 
-    res.json({
+    return res.json({
       success: true,
       message: "Login successful",
-      data: { token, user: { id: user._id, fullName: user.fullName, role: user.role } },
+      data: {
+        token,
+        user: {
+          id: user._id,
+          fullName: user.fullName,
+          mail: user.mail
+        }
+      }
     });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
-
