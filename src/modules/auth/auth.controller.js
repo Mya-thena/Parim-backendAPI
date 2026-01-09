@@ -16,6 +16,7 @@ exports.createAccount = async (req, res) => {
       confirmPassword
     } = req.body;
 
+    // 1. Validate input
     if (!fullName || !mail || !phoneNumber || !createPassword || !confirmPassword) {
       return res.status(400).json({
         success: false,
@@ -30,16 +31,19 @@ exports.createAccount = async (req, res) => {
       });
     }
 
+    // 2. Check existing user
     const existingUser = await User.findOne({ mail });
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: "Mail already exists"
+        message: "Email already exists"
       });
     }
 
+    // 3. Hash password
     const hashedPassword = await bcrypt.hash(createPassword, 10);
 
+    // 4. Create user (NOT verified yet)
     await User.create({
       fullName,
       mail,
@@ -68,6 +72,13 @@ exports.sendOtp = async (req, res) => {
   try {
     const { mail } = req.body;
 
+    if (!mail) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required"
+      });
+    }
+
     const user = await User.findOne({ mail });
     if (!user) {
       return res.status(404).json({
@@ -83,10 +94,11 @@ exports.sendOtp = async (req, res) => {
       });
     }
 
+    // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     user.otp = otp;
-    user.otpExpiresAt = Date.now() + 10 * 60 * 1000;
+    user.otpExpiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
     await user.save();
 
     await sendOtpMail(user.mail, otp);
@@ -111,6 +123,13 @@ exports.verifyOtp = async (req, res) => {
   try {
     const { mail, otp } = req.body;
 
+    if (!mail || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and OTP are required"
+      });
+    }
+
     const user = await User.findOne({ mail });
     if (!user) {
       return res.status(404).json({
@@ -119,13 +138,18 @@ exports.verifyOtp = async (req, res) => {
       });
     }
 
-    if (user.otp !== otp || user.otpExpiresAt < Date.now()) {
+    if (
+      user.otp !== otp ||
+      !user.otpExpiresAt ||
+      user.otpExpiresAt < Date.now()
+    ) {
       return res.status(400).json({
         success: false,
         message: "Invalid or expired OTP"
       });
     }
 
+    // Verify account
     user.isVerified = true;
     user.otp = null;
     user.otpExpiresAt = null;
@@ -150,6 +174,13 @@ exports.verifyOtp = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { mail, password } = req.body;
+
+    if (!mail || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and password are required"
+      });
+    }
 
     const user = await User.findOne({ mail });
     if (!user) {

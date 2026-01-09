@@ -12,7 +12,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      lowercase: true
     },
 
     phoneNumber: {
@@ -34,6 +33,7 @@ const userSchema = new mongoose.Schema(
     otpExpiresAt: Date
   },
   { timestamps: true }
+  
 );
 
 

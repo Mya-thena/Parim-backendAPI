@@ -1,6 +1,9 @@
 const Bank = require("../../models/bank.model");
 const User = require("../../models/user.model");
 
+/* =======================
+   ADD BANK DETAILS
+======================= */
 exports.addBankDetails = async (req, res) => {
   try {
     const { bankName, accountNumber, accountName } = req.body;
