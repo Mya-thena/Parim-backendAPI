@@ -30,10 +30,10 @@ const authController = require("../../controllers/auth.controller");
  *             properties:
  *               fullName:
  *                 type: string
- *                 example: John Doe
+ *                 example: Kayode Owoseni
  *               mail:
  *                 type: string
- *                 example: john@example.com
+ *                 example: devkraft@gmail.com
  *               phoneNumber:
  *                 type: string
  *                 example: 08012345678
@@ -43,12 +43,6 @@ const authController = require("../../controllers/auth.controller");
  *               confirmPassword:
  *                 type: string
  *                 example: password123
- *               department:
- *                 type: string
- *                 example: Operations
- *               position:
- *                 type: string
- *                 example: Staff
  *     responses:
  *       201:
  *         description: User registered successfully
@@ -76,19 +70,19 @@ router.post("/register", authController.registerUser);
  *             properties:
  *               fullName:
  *                 type: string
- *                 example: Admin User
+ *                 example: Patrick Mya
  *               mail:
  *                 type: string
- *                 example: admin@example.com
+ *                 example: patrick.mya@example.com
  *               phoneNumber:
  *                 type: string
  *                 example: 08012345678
  *               createPassword:
  *                 type: string
- *                 example: adminpass123
+ *                 example: password123
  *               confirmPassword:
  *                 type: string
- *                 example: adminpass123
+ *                 example: password123
  *               role:
  *                 type: string
  *                 enum: [super_admin, admin, event_manager]
@@ -297,6 +291,69 @@ router.get("/profile",
   require("../../middlewares/rbac.middleware").protect,
   authController.getProfile
 );
+
+/**
+ * @swagger
+ * /api/auth/forgot-password:
+ *   post:
+ *     summary: Request password reset OTP
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - mail
+ *             properties:
+ *               mail:
+ *                 type: string
+ *                 example: devkraft@gmail.com
+ *               userType:
+ *                 type: string
+ *                 enum: [user, admin]
+ *                 default: user
+ *     responses:
+ *       200:
+ *         description: Password reset code sent
+ */
+router.post("/forgot-password", authController.forgotPassword);
+
+/**
+ * @swagger
+ * /api/auth/reset-password:
+ *   post:
+ *     summary: Reset password with OTP
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - mail
+ *               - otp
+ *               - newPassword
+ *             properties:
+ *               mail:
+ *                 type: string
+ *                 example: devkraft@gmail.com
+ *               otp:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *                 example: password123
+ *               userType:
+ *                 type: string
+ *                 enum: [user, admin]
+ *                 default: user
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
+ */
+router.post("/reset-password", authController.resetPassword);
 
 // Test route
 router.get("/test", (req, res) => {

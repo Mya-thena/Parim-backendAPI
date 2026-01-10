@@ -32,16 +32,6 @@ const userSchema = new mongoose.Schema(
       sparse: true // Allows multiple nulls
     },
 
-    department: {
-      type: String,
-      default: ""
-    },
-
-    position: {
-      type: String,
-      default: ""
-    },
-
     // Profile information
     profilePicture: {
       type: String,
