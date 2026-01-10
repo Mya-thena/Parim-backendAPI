@@ -1,7 +1,7 @@
 const User = require("../models/user.model");
 const Admin = require("../models/admin.model");
 const bcrypt = require("bcrypt");
-const { sendOtpMail } = require("../services/mail.service");
+const { sendOtpMail, sendPasswordResetMail } = require("../services/mail.service");
 const {
   generateOTPWithExpiry,
   canRequestOTP,
@@ -28,9 +28,7 @@ exports.registerUser = async (req, res) => {
       mail,
       phoneNumber,
       createPassword,
-      confirmPassword,
-      department,
-      position
+      confirmPassword
     } = req.body;
 
     // Validate input
@@ -65,8 +63,7 @@ exports.registerUser = async (req, res) => {
         mail,
         phoneNumber,
         password: hashedPassword,
-        department,
-        position,
+        password: hashedPassword,
         isVerified: false
       });
       console.log('User created successfully:', user._id);
@@ -462,14 +459,113 @@ exports.getProfile = async (req, res) => {
       profileData.permissions = req.user.permissions;
     } else {
       profileData.staffId = req.user.staffId;
-      profileData.department = req.user.department;
-      profileData.position = req.user.position;
     }
 
     successResponse(res, profileData, "Profile retrieved successfully");
 
   } catch (error) {
     console.error("Get profile error:", error);
+    errorResponse(res, RESPONSE_MESSAGES.INTERNAL_SERVER_ERROR, HTTP_STATUS.INTERNAL_SERVER_ERROR);
+  }
+};
+
+/* =======================
+   FORGOT PASSWORD
+======================= */
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { mail, userType = 'user' } = req.body;
+
+    if (!mail) {
+      return errorResponse(res, "Email is required", HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const Model = userType === 'admin' ? Admin : User;
+    const user = await Model.findOne({ mail });
+
+    if (!user) {
+      return errorResponse(res, RESPONSE_MESSAGES.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    }
+
+    // Check if user can request OTP
+    const otpCheck = canRequestOTP(mail, userType);
+    if (!otpCheck.canRequest) {
+      return errorResponse(res, otpCheck.message, HTTP_STATUS.TOO_MANY_REQUESTS, {
+        remainingTime: otpCheck.remainingTime
+      });
+    }
+
+    // Generate new OTP
+    const { otp, expiresAt } = generateOTPWithExpiry();
+
+    await Model.findByIdAndUpdate(user._id, {
+      otp,
+      otpExpiresAt: expiresAt
+    });
+
+    // Record OTP request
+    recordOTPRequest(mail, userType);
+
+    // Send Password Reset Email
+    console.log(`[DEV] Password Reset OTP for ${mail}: ${otp}`);
+    try {
+      await sendPasswordResetMail(mail, otp);
+    } catch (emailError) {
+      console.log('Email service error (continuing anyway):', emailError.message);
+    }
+
+    successResponse(res, null, "Password reset code sent to email");
+
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    errorResponse(res, RESPONSE_MESSAGES.INTERNAL_SERVER_ERROR, HTTP_STATUS.INTERNAL_SERVER_ERROR);
+  }
+};
+
+/* =======================
+   RESET PASSWORD
+======================= */
+exports.resetPassword = async (req, res) => {
+  try {
+    const { mail, otp, newPassword, userType = 'user' } = req.body;
+
+    if (!mail || !otp || !newPassword) {
+      return errorResponse(res, "Email, OTP, and new password are required", HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const Model = userType === 'admin' ? Admin : User;
+    const user = await Model.findOne({ mail });
+
+    if (!user) {
+      return errorResponse(res, RESPONSE_MESSAGES.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    }
+
+    // Verify OTP
+    const verification = verifyOTP(user.otp, otp, user.otpExpiresAt, mail, userType);
+    if (!verification.isValid) {
+      return errorResponse(res, verification.message, HTTP_STATUS.BAD_REQUEST, {
+        error: verification.error
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    // Update password, clear OTP, and clear refresh tokens (logout all devices)
+    await Model.findByIdAndUpdate(user._id, {
+      password: hashedPassword,
+      otp: null,
+      otpExpiresAt: null,
+      refreshTokens: [] // Force fresh login for security
+    });
+
+    // Clear rate limit record
+    clearOTPRecord(mail, userType);
+
+    successResponse(res, null, "Password has been reset successfully. Please login with your new password.");
+
+  } catch (error) {
+    console.error("Reset password error:", error);
     errorResponse(res, RESPONSE_MESSAGES.INTERNAL_SERVER_ERROR, HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
 };
