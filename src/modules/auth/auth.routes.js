@@ -1,21 +1,19 @@
 const express = require("express");
 const router = express.Router();
-const authController = require("./auth.controller");
-
+const authController = require("../../controllers/auth.controller");
 
 /**
  * @swagger
  * tags:
  *   name: Authentication
- *   description: User authentication and verification
+ *   description: User and Admin authentication and verification
  */
-
 
 /**
  * @swagger
- * /api/auth/create-account:
+ * /api/auth/register:
  *   post:
- *     summary: Create a new user account
+ *     summary: Register a new staff user
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -32,10 +30,10 @@ const authController = require("./auth.controller");
  *             properties:
  *               fullName:
  *                 type: string
- *                 example: Jane Doe
+ *                 example: John Doe
  *               mail:
  *                 type: string
- *                 example: jane@example.com
+ *                 example: john@example.com
  *               phoneNumber:
  *                 type: string
  *                 example: 08012345678
@@ -45,19 +43,67 @@ const authController = require("./auth.controller");
  *               confirmPassword:
  *                 type: string
  *                 example: password123
+ *               department:
+ *                 type: string
+ *                 example: Operations
+ *               position:
+ *                 type: string
+ *                 example: Staff
  *     responses:
  *       201:
- *         description: Account created successfully
- *       400:
- *         description: Validation error
+ *         description: User registered successfully
  */
-router.post("/create-account", authController.createAccount);
+router.post("/register", authController.registerUser);
+
+/**
+ * @swagger
+ * /api/auth/register-admin:
+ *   post:
+ *     summary: Register a new admin
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - fullName
+ *               - mail
+ *               - phoneNumber
+ *               - createPassword
+ *               - confirmPassword
+ *             properties:
+ *               fullName:
+ *                 type: string
+ *                 example: Admin User
+ *               mail:
+ *                 type: string
+ *                 example: admin@example.com
+ *               phoneNumber:
+ *                 type: string
+ *                 example: 08012345678
+ *               createPassword:
+ *                 type: string
+ *                 example: adminpass123
+ *               confirmPassword:
+ *                 type: string
+ *                 example: adminpass123
+ *               role:
+ *                 type: string
+ *                 enum: [super_admin, admin, event_manager]
+ *                 example: event_manager
+ *     responses:
+ *       201:
+ *         description: Admin registered successfully
+ */
+router.post("/register-admin", authController.registerAdmin);
 
 /**
  * @swagger
  * /api/auth/verify-otp:
  *   post:
- *     summary: Verify user email with OTP
+ *     summary: Verify OTP for email verification
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -71,22 +117,25 @@ router.post("/create-account", authController.createAccount);
  *             properties:
  *               mail:
  *                 type: string
- *                 example: jane@example.com
+ *                 example: john@example.com
  *               otp:
  *                 type: string
- *                 example: "123456"
+ *                 example: 123456
+ *               userType:
+ *                 type: string
+ *                 enum: [user, admin]
+ *                 example: user
  *     responses:
  *       200:
- *         description: Account verified successfully
- *       400:
- *         description: Invalid or expired OTP
+ *         description: OTP verified successfully
  */
 router.post("/verify-otp", authController.verifyOtp);
+
 /**
  * @swagger
  * /api/auth/login:
  *   post:
- *     summary: Login user
+ *     summary: Login user or admin
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -100,21 +149,162 @@ router.post("/verify-otp", authController.verifyOtp);
  *             properties:
  *               mail:
  *                 type: string
- *                 example: jane@example.com
+ *                 example: john@example.com
  *               password:
  *                 type: string
  *                 example: password123
+ *               userType:
+ *                 type: string
+ *                 enum: [user, admin]
+ *                 example: user
  *     responses:
  *       200:
  *         description: Login successful
- *       403:
- *         description: Account not verified
- *       400:
- *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       type: object
+ *                     tokens:
+ *                       type: object
+ *                       properties:
+ *                         accessToken:
+ *                           type: string
+ *                         refreshToken:
+ *                           type: string
+ *                         expiresIn:
+ *                           type: number
  */
-
-
-
 router.post("/login", authController.login);
+
+/**
+ * @swagger
+ * /api/auth/resend-otp:
+ *   post:
+ *     summary: Resend OTP for email verification
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - mail
+ *             properties:
+ *               mail:
+ *                 type: string
+ *                 example: john@example.com
+ *               userType:
+ *                 type: string
+ *                 enum: [user, admin]
+ *                 example: user
+ *     responses:
+ *       200:
+ *         description: OTP sent successfully
+ */
+router.post("/resend-otp", authController.resendOtp);
+
+/**
+ * @swagger
+ * /api/auth/refresh-token:
+ *   post:
+ *     summary: Refresh access token using refresh token
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *     responses:
+ *       200:
+ *         description: Token refreshed successfully
+ */
+router.post("/refresh-token", authController.refreshToken);
+
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout user (invalidate refresh token)
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 description: Optional - logout from specific device. If not provided, logout from all devices.
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ */
+router.post("/logout",
+  require("../../middlewares/rbac.middleware").protect,
+  authController.logout
+);
+
+/**
+ * @swagger
+ * /api/auth/profile:
+ *   get:
+ *     summary: Get user profile
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     fullName:
+ *                       type: string
+ *                     mail:
+ *                       type: string
+ *                     isVerified:
+ *                       type: boolean
+ */
+router.get("/profile",
+  require("../../middlewares/rbac.middleware").protect,
+  authController.getProfile
+);
+
+// Test route
+router.get("/test", (req, res) => {
+  res.json({
+    success: true,
+    message: "Auth routes working",
+    timestamp: new Date().toISOString()
+  });
+});
 
 module.exports = router;

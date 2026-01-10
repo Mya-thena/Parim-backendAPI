@@ -2,18 +2,18 @@
 const swaggerJSDoc = require("swagger-jsdoc");
 require("dotenv").config();
 
-const servers = process.env.nodeEnv === "development" ? `http://localhost:${process.env.PORT}`: process.env.PROD_URL;
+const servers = process.env.NODE_ENV === "development" ? `http://localhost:${process.env.PORT}`: process.env.PROD_URL;
 
 const options = {
 	definition: {
 		openapi: "3.0.3",
 		info: {
-			title: "Pathlearn API",
+			title: "Parim Pro API",
 			version: "1.0.0",
-			description: `Pathlearn API Documentation.`,
+			description: `Parim Pro Staff Management API Documentation.`,
 			contact: {
-				name: "Pathlearn Dev Team",
-				email: "support@pathlearn.com",
+				name: "Parim Pro Dev Team",
+				email: "support@parimpro.com",
 			},
 			license: {
 				name: "MIT License",
