@@ -1,21 +1,18 @@
 const nodemailer = require("nodemailer");
 
-
-// Determine if secure connection is needed (465 usually implies secure: true)
-const isSecure = process.env.MAIL_SECURE === 'true' || process.env.MAIL_PORT == 465;
+const port = Number(process.env.MAIL_PORT) || 587;
 
 const transporter = nodemailer.createTransport({
   host: process.env.MAIL_HOST,
-  port: process.env.MAIL_PORT,
-  secure: isSecure,
+  port,
+  secure: port === 465, // true for SSL, false for TLS
   auth: {
     user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS
+    pass: process.env.MAIL_PASS,
   },
   tls: {
-    // frequent fix for "self-signed certificate" or mismatched credentials in dev
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false,
+  },
 });
 
 exports.sendOtpMail = async (to, otp) => {
