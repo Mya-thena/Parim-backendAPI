@@ -1,24 +1,15 @@
-const nodemailer = require("nodemailer");
+const sgMail = require('@sendgrid/mail');
 
-const port = Number(process.env.MAIL_PORT) || 587;
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-const transporter = nodemailer.createTransport({
-  host: process.env.MAIL_HOST,
-  port,
-  secure: port === 465, // true for SSL, false for TLS
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-});
+const getFromEmail = () => {
+  return process.env.MAIL_FROM || 'devkraft.xyz@gmail.com'; // Fallback if env is missing
+};
 
 exports.sendOtpMail = async (to, otp) => {
-  await transporter.sendMail({
-    from: `"Parim Pro" <${process.env.MAIL_USER}>`,
+  const msg = {
     to,
+    from: getFromEmail(),
     subject: "Parim Pro OTP Verification",
     html: `
       <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 40px 0; color: #333;">
@@ -40,13 +31,24 @@ exports.sendOtpMail = async (to, otp) => {
         </div>
       </div>
     `
-  });
+  };
+
+  try {
+    await sgMail.send(msg);
+    console.log(`Email sent to ${to}`);
+  } catch (error) {
+    console.error('SendGrid Error (OTP):', error);
+    if (error.response) {
+      console.error(error.response.body);
+    }
+    throw error; // Re-throw to be caught by controller
+  }
 };
 
 exports.sendPasswordResetMail = async (to, otp) => {
-  await transporter.sendMail({
-    from: `"Parim Pro" <${process.env.MAIL_USER}>`,
+  const msg = {
     to,
+    from: getFromEmail(),
     subject: "Parim Pro Password Reset",
     html: `
       <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 40px 0; color: #333;">
@@ -68,5 +70,16 @@ exports.sendPasswordResetMail = async (to, otp) => {
         </div>
       </div>
     `
-  });
+  };
+
+  try {
+    await sgMail.send(msg);
+    console.log(`Password reset email sent to ${to}`);
+  } catch (error) {
+    console.error('SendGrid Error (Reset):', error);
+    if (error.response) {
+      console.error(error.response.body);
+    }
+    throw error; // Re-throw for controller handling
+  }
 };
