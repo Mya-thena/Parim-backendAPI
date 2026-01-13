@@ -133,8 +133,8 @@ const userSchema = new mongoose.Schema(
 );
 
 // Index for efficient queries
-userSchema.index({ mail: 1 });
-userSchema.index({ staffId: 1 });
+// userSchema.index({ mail: 1 }); // Already unique
+// userSchema.index({ staffId: 1 }); // Already unique/sparse
 userSchema.index({ isActive: 1 });
 userSchema.index({ isVerified: 1 });
 userSchema.index({ "refreshTokens.token": 1 });

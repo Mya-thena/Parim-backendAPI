@@ -93,21 +93,21 @@ const adminSchema = new mongoose.Schema(
 );
 
 // Index for efficient queries
-adminSchema.index({ mail: 1 });
+// adminSchema.index({ mail: 1 }); // Already unique
 adminSchema.index({ role: 1 });
 adminSchema.index({ isActive: 1 });
 adminSchema.index({ "refreshTokens.token": 1 });
 
 // Virtual for account lock status
-adminSchema.virtual('isLocked').get(function() {
+adminSchema.virtual('isLocked').get(function () {
   return !!(this.lockUntil && this.lockUntil > Date.now());
 });
 
 // Method to add refresh token
-adminSchema.methods.addRefreshToken = function(token, deviceInfo, ipAddress) {
+adminSchema.methods.addRefreshToken = function (token, deviceInfo, ipAddress) {
   // Remove expired tokens
   this.refreshTokens = this.refreshTokens.filter(rt => rt.expiresAt > new Date());
-  
+
   // Add new token (expires in 30 days)
   this.refreshTokens.push({
     token,
@@ -115,24 +115,24 @@ adminSchema.methods.addRefreshToken = function(token, deviceInfo, ipAddress) {
     ipAddress,
     expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
   });
-  
+
   return this.save();
 };
 
 // Method to remove refresh token
-adminSchema.methods.removeRefreshToken = function(token) {
+adminSchema.methods.removeRefreshToken = function (token) {
   this.refreshTokens = this.refreshTokens.filter(rt => rt.token !== token);
   return this.save();
 };
 
 // Method to clear all refresh tokens
-adminSchema.methods.clearAllRefreshTokens = function() {
+adminSchema.methods.clearAllRefreshTokens = function () {
   this.refreshTokens = [];
   return this.save();
 };
 
 // Method to increment login attempts
-adminSchema.methods.incLoginAttempts = function() {
+adminSchema.methods.incLoginAttempts = function () {
   // If we have a previous lock that has expired, restart at 1
   if (this.lockUntil && this.lockUntil < Date.now()) {
     return this.updateOne({
@@ -140,19 +140,19 @@ adminSchema.methods.incLoginAttempts = function() {
       $set: { loginAttempts: 1 }
     });
   }
-  
+
   const updates = { $inc: { loginAttempts: 1 } };
-  
+
   // Lock account after 5 failed attempts for 2 hours
   if (this.loginAttempts + 1 >= 5 && !this.isLocked) {
     updates.$set = { lockUntil: Date.now() + 2 * 60 * 60 * 1000 }; // 2 hours
   }
-  
+
   return this.updateOne(updates);
 };
 
 // Method to reset login attempts
-adminSchema.methods.resetLoginAttempts = function() {
+adminSchema.methods.resetLoginAttempts = function () {
   return this.updateOne({
     $unset: { loginAttempts: 1, lockUntil: 1 },
     $set: { lastLogin: new Date() }
@@ -160,24 +160,24 @@ adminSchema.methods.resetLoginAttempts = function() {
 };
 
 // Method to check permissions
-adminSchema.methods.hasPermission = function(permission) {
+adminSchema.methods.hasPermission = function (permission) {
   return this.permissions.includes(permission) || this.role === 'super_admin';
 };
 
 // Static method to find by credentials
-adminSchema.statics.findByCredentials = async function(mail, password) {
+adminSchema.statics.findByCredentials = async function (mail, password) {
   const admin = await this.findOne({ mail, isActive: true });
   if (!admin) return null;
-  
+
   // Check if account is locked
   if (admin.isLocked) return null;
-  
+
   const isMatch = await require('bcrypt').compare(password, admin.password);
   if (!isMatch) {
     await admin.incLoginAttempts();
     return null;
   }
-  
+
   // Reset login attempts on successful login
   await admin.resetLoginAttempts();
   return admin;

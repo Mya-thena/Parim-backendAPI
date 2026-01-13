@@ -7,14 +7,14 @@ const roleSchema = new mongoose.Schema(
       ref: "Event",
       required: true
     },
-    title: {
+    roleName: {
       type: String,
       required: true,
       trim: true
     },
-    description: {
-      type: String,
-      required: true
+    roleDescription: {
+      type: String, // Made optional in doc, but keeping structure.
+      required: false
     },
     price: {
       type: Number,
@@ -26,24 +26,14 @@ const roleSchema = new mongoose.Schema(
       required: true,
       min: 1
     },
-    currentParticipants: {
+    duration: {
+      type: String, // e.g. "5hrs"
+      required: false
+    },
+    filledSlots: {
       type: Number,
       default: 0
     },
-    requiredTraining: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Training"
-    }],
-    participants: [{
-      userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
-      },
-      joinedAt: {
-        type: Date,
-        default: Date.now
-      }
-    }],
     isActive: {
       type: Boolean,
       default: true
@@ -54,47 +44,11 @@ const roleSchema = new mongoose.Schema(
 
 // Index for efficient queries
 roleSchema.index({ eventId: 1 });
-roleSchema.index({ title: 1 });
-roleSchema.index({ "participants.userId": 1 });
+roleSchema.index({ roleName: 1 });
 
 // Virtual to check if role is full
-roleSchema.virtual('isFull').get(function() {
-  return this.currentParticipants >= this.capacity;
+roleSchema.virtual('isFull').get(function () {
+  return this.filledSlots >= this.capacity;
 });
-
-// Method to add participant
-roleSchema.methods.addParticipant = function(userId) {
-  if (this.currentParticipants >= this.capacity) {
-    throw new Error('Role capacity is full');
-  }
-  
-  // Check if user already exists
-  const existingParticipant = this.participants.find(
-    p => p.userId.toString() === userId.toString()
-  );
-  
-  if (existingParticipant) {
-    throw new Error('User already added to this role');
-  }
-  
-  this.participants.push({ userId });
-  this.currentParticipants += 1;
-  return this.save();
-};
-
-// Method to remove participant
-roleSchema.methods.removeParticipant = function(userId) {
-  const participantIndex = this.participants.findIndex(
-    p => p.userId.toString() === userId.toString()
-  );
-  
-  if (participantIndex === -1) {
-    throw new Error('User not found in this role');
-  }
-  
-  this.participants.splice(participantIndex, 1);
-  this.currentParticipants -= 1;
-  return this.save();
-};
 
 module.exports = mongoose.model("Role", roleSchema);

@@ -9,11 +9,12 @@ const app = express();
 // Connect database
 connectDB();
 
- // Swagger docs endpoint
+// Swagger docs endpoint
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Middleware
 app.use(express.json());
+app.use(require("cors")());
 
 // Import auth routes
 const path = require("path");
@@ -23,6 +24,10 @@ app.use("/api/auth", authRoutes);
 //Imports bank routes
 const bankRoutes = require("./src/modules/bank/bank.routes");
 app.use("/api/bank", bankRoutes);
+
+// Import events routes
+const eventRoutes = require("./src/modules/events/events.routes");
+app.use("/api/events", eventRoutes);
 
 // Test route
 app.get("/", (req, res) => {

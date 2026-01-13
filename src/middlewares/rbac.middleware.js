@@ -21,7 +21,7 @@ exports.authenticate = async (req, res, next) => {
 
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+
     // Determine user type and fetch appropriate model
     let user;
     if (decoded.userType === 'admin') {
@@ -41,7 +41,7 @@ exports.authenticate = async (req, res, next) => {
     req.user = user;
     req.userType = decoded.userType;
     req.tokenExp = decoded.exp;
-    
+
     next();
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
@@ -51,7 +51,7 @@ exports.authenticate = async (req, res, next) => {
         error: 'TOKEN_EXPIRED'
       });
     }
-    
+
     if (error.name === 'JsonWebTokenError') {
       return res.status(HTTP_STATUS.UNAUTHORIZED).json({
         success: false,
@@ -217,7 +217,7 @@ exports.validateRefreshToken = async (req, res, next) => {
 
     // Verify refresh token
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-    
+
     // Find user with this refresh token
     let user;
     if (decoded.userType === 'admin') {
@@ -247,7 +247,7 @@ exports.validateRefreshToken = async (req, res, next) => {
     req.user = user;
     req.userType = decoded.userType;
     req.refreshToken = refreshToken;
-    
+
     next();
   } catch (error) {
     return res.status(HTTP_STATUS.UNAUTHORIZED).json({
@@ -271,7 +271,7 @@ exports.optionalAuth = async (req, res, next) => {
 
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+
     let user;
     if (decoded.userType === 'admin') {
       user = await Admin.findById(decoded.id).select('-password -refreshTokens');
@@ -284,7 +284,7 @@ exports.optionalAuth = async (req, res, next) => {
       req.userType = decoded.userType;
       req.tokenExp = decoded.exp;
     }
-    
+
     next();
   } catch (error) {
     // Ignore errors for optional auth

@@ -7,34 +7,47 @@ const eventSchema = new mongoose.Schema(
       required: true,
       trim: true
     },
-    description: {
+    shortDescription: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    longDescription: {
       type: String,
       required: true
+    },
+    bannerImage: {
+      type: String,
+      required: false // Optional for now, or true if mandatory
     },
     eventDate: {
-      type: Date,
-      required: true
-    },
-    startTime: {
-      type: Date,
-      required: true
-    },
-    endTime: {
-      type: Date,
-      required: true
+      start: {
+        type: Date,
+        required: true
+      },
+      end: {
+        type: Date,
+        required: true
+      }
     },
     location: {
-      type: String,
-      required: true
+      address: {
+        type: String,
+        required: true
+      },
+      state: {
+        type: String,
+        required: true
+      }
     },
     status: {
       type: String,
-      enum: ['draft', 'published', 'in_progress', 'completed', 'cancelled'],
+      enum: ['draft', 'published', 'closed'], // Removed in_progress/completed/cancelled to match simple logic
       default: 'draft'
     },
     qrCode: {
       type: String,
-      required: true
+      required: false // Sprint 2: No QR yet
     },
     maxParticipants: {
       type: Number,
@@ -54,7 +67,7 @@ const eventSchema = new mongoose.Schema(
 );
 
 // Index for efficient queries
-eventSchema.index({ eventDate: 1 });
+eventSchema.index({ "eventDate.start": 1 }); // Updated field path
 eventSchema.index({ status: 1 });
 eventSchema.index({ createdBy: 1 });
 
