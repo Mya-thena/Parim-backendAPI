@@ -35,6 +35,14 @@ router.patch(
     eventsController.updateEvent
 );
 
+// Delete Event (Admin Only - Safe Delete)
+router.delete(
+    '/:eventId',
+    protect,
+    restrictTo('admin'),
+    eventsController.deleteEvent
+);
+
 // List Events (Search & Pagination support)
 router.get(
     '/',
@@ -74,6 +82,14 @@ router.patch(
     protect,
     restrictTo('admin'),
     rolesController.updateRole
+);
+
+// Delete Role (Admin Only - Safe Delete)
+router.delete(
+    '/roles/:roleId',
+    protect,
+    restrictTo('admin'),
+    rolesController.deleteRole
 );
 
 // ==========================================

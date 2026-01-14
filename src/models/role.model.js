@@ -37,6 +37,11 @@ const roleSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true
     }
   },
   { timestamps: true }

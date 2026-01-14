@@ -53,8 +53,13 @@ const eventSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['draft', 'published', 'closed'], // Removed in_progress/completed/cancelled to match simple logic
+      enum: ['draft', 'published', 'closed'],
       default: 'draft'
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true
     },
     qrCode: {
       type: String,
