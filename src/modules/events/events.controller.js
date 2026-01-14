@@ -153,9 +153,8 @@ exports.listEvents = async (req, res) => {
             const searchRegex = new RegExp(search, 'i');
 
             // If searching for Event Manager (createdBy name), we need to find those Users/Admins first
-            // Note: This matches simple case where Admin creates events. 
             // If mixed User/Admin creation, we check both. Assuming Admin for now as main event creators.
-            const Admin = require("../../../models/admin.model");
+            const Admin = require("../../models/admin.model");
             const matchingAdmins = await Admin.find({ fullName: searchRegex }).select('_id');
             const adminIds = matchingAdmins.map(a => a._id);
 
