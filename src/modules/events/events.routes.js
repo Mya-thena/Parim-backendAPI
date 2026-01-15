@@ -112,4 +112,36 @@ router.get(
     participantsController.listParticipants
 );
 
+// Change Role (Staff - Pre-Approval Only)
+router.patch(
+    '/:eventId/participants/change-role',
+    protect,
+    restrictTo('user'),
+    participantsController.changeRole
+);
+
+// Withdraw Application (Staff)
+router.delete(
+    '/:eventId/participants/withdraw',
+    protect,
+    restrictTo('user'),
+    participantsController.withdrawApplication
+);
+
+// Approve Participant (Admin Only)
+router.patch(
+    '/participants/:participantId/approve',
+    protect,
+    restrictTo('admin'),
+    participantsController.approveParticipant
+);
+
+// Reject Participant (Admin Only)
+router.patch(
+    '/participants/:participantId/reject',
+    protect,
+    restrictTo('admin'),
+    participantsController.rejectParticipant
+);
+
 module.exports = router;
