@@ -7,7 +7,7 @@ const { HTTP_STATUS, ATTENDANCE_STATUS, OVERRIDE_ACTION, ATTENDANCE_METHOD } = r
 
 /**
  * Get Live Attendance Statistics (Admin)
- * Real-time attendance overview for an event
+ * Real-time attendance overview for an event by the admin
  */
 exports.getLiveStats = async (req, res) => {
     try {
