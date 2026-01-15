@@ -14,14 +14,13 @@ const EVENT_STATUS = {
   CANCELLED: 'cancelled'
 };
 
-// Attendance Statuses
+// Attendance Statuses (Sprint 3 - State Machine)
 const ATTENDANCE_STATUS = {
-  NOT_CHECKED_IN: 'not_checked_in',
-  QR_VERIFIED: 'qr_verified',
-  SUPERVISOR_VERIFIED: 'supervisor_verified',
-  COMPLETED: 'completed',
-  ABSENT: 'absent',
-  LATE: 'late'
+  ASSIGNED: 'ASSIGNED',
+  CHECKED_IN: 'CHECKED_IN',
+  ACTIVE: 'ACTIVE',
+  COMPLETED: 'COMPLETED',
+  ABSENT: 'ABSENT'
 };
 
 // Payment Statuses
@@ -48,7 +47,7 @@ const RESPONSE_MESSAGES = {
   LOGIN_SUCCESS: 'Login successful',
   BANK_DETAILS_ADDED: 'Bank details added successfully',
   OTP_SENT: 'OTP sent successfully',
-  
+
   // Error messages
   ALL_FIELDS_REQUIRED: 'All fields are required',
   PASSWORDS_NOT_MATCH: 'Passwords do not match',
@@ -81,6 +80,26 @@ const HTTP_STATUS = {
   INTERNAL_SERVER_ERROR: 500
 };
 
+// QR Token Types
+const QR_TOKEN_TYPE = {
+  EVENT_QR: 'EVENT_QR'
+};
+
+// Attendance Methods
+const ATTENDANCE_METHOD = {
+  QR: 'qr',
+  MANUAL: 'manual',
+  OVERRIDE: 'override'
+};
+
+// Override Actions
+const OVERRIDE_ACTION = {
+  CHECK_IN_OVERRIDE: 'CHECK_IN_OVERRIDE',
+  CHECK_OUT_OVERRIDE: 'CHECK_OUT_OVERRIDE',
+  MARK_ABSENT: 'MARK_ABSENT',
+  STATUS_CHANGE: 'STATUS_CHANGE'
+};
+
 module.exports = {
   USER_ROLES,
   EVENT_STATUS,
@@ -88,5 +107,8 @@ module.exports = {
   PAYMENT_STATUS,
   TRAINING_STATUS,
   RESPONSE_MESSAGES,
-  HTTP_STATUS
+  HTTP_STATUS,
+  QR_TOKEN_TYPE,
+  ATTENDANCE_METHOD,
+  OVERRIDE_ACTION
 };

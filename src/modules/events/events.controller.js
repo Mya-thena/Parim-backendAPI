@@ -141,10 +141,17 @@ exports.listEvents = async (req, res) => {
         const skip = (page - 1) * limit;
         let query = {};
 
-        // 1. Status Filter
+        // 1. Base Query: Always exclude deleted items
+        query.isDeleted = false;
+
+        // 2. Status & Scoping Filter
         if (userType === 'admin') {
+            // Admin: Scope to OWN events only
+            query.createdBy = req.user._id;
+
             if (status) query.status = status;
         } else {
+            // Staff: Published events only
             query.status = 'published';
         }
 
@@ -153,9 +160,8 @@ exports.listEvents = async (req, res) => {
             const searchRegex = new RegExp(search, 'i');
 
             // If searching for Event Manager (createdBy name), we need to find those Users/Admins first
-            // Note: This matches simple case where Admin creates events. 
             // If mixed User/Admin creation, we check both. Assuming Admin for now as main event creators.
-            const Admin = require("../../../models/admin.model");
+            const Admin = require("../../models/admin.model");
             const matchingAdmins = await Admin.find({ fullName: searchRegex }).select('_id');
             const adminIds = matchingAdmins.map(a => a._id);
 
@@ -219,6 +225,67 @@ exports.getEventByUniqueId = async (req, res) => {
         });
     } catch (error) {
         console.error("Get Event By ID Error:", error);
+        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: RESPONSE_MESSAGES.INTERNAL_SERVER_ERROR,
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Safe Delete Event (Admin only)
+ * - Checks for active participants
+ * - Soft deletes if safe
+ */
+exports.deleteEvent = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const userId = req.user._id;
+
+        // 1. Find Event (Scoped to Creator)
+        const event = await Event.findOne({
+            _id: eventId,
+            createdBy: userId,
+            isDeleted: false
+        });
+
+        if (!event) {
+            return res.status(HTTP_STATUS.NOT_FOUND).json({
+                success: false,
+                message: "Event not found or you do not have permission to delete it"
+            });
+        }
+
+        // 2. Safety Check: Active Participants
+        // Assuming we have a Participant model. We need to require it at top or here.
+        // Let's assume passed in request or imported. 
+        // Need to ensure Participant model is imported. 
+        const Participant = require("../../models/participant.model");
+        const activeParticipants = await Participant.countDocuments({
+            eventId: eventId,
+            status: { $in: ['applied', 'approved'] } // Exclude cancelled/rejected
+        });
+
+        if (activeParticipants > 0) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
+                success: false,
+                message: `Cannot delete event. There are ${activeParticipants} active participant(s). Please reject or cancel them first.`
+            });
+        }
+
+        // 3. Soft Delete
+        event.isDeleted = true;
+        event.status = 'closed'; // Close it too
+        await event.save();
+
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: "Event deleted successfully (Safe Delete)"
+        });
+
+    } catch (error) {
+        console.error("Delete Event Error:", error);
         return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
             success: false,
             message: RESPONSE_MESSAGES.INTERNAL_SERVER_ERROR,

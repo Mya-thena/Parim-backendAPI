@@ -115,3 +115,66 @@ exports.listRoles = async (req, res) => {
         });
     }
 };
+
+/**
+ * Safe Delete Role (Admin only)
+ */
+exports.deleteRole = async (req, res) => {
+    try {
+        const { roleId } = req.params;
+        const userId = req.user._id;
+
+        // 1. Find Role and ensure parent Event belongs to Admin
+        const role = await Role.findOne({ _id: roleId, isDeleted: false });
+        if (!role) {
+            return res.status(HTTP_STATUS.NOT_FOUND).json({
+                success: false,
+                message: "Role not found"
+            });
+        }
+
+        const event = await Event.findOne({
+            _id: role.eventId,
+            createdBy: userId
+        });
+
+        if (!event) {
+            return res.status(HTTP_STATUS.FORBIDDEN).json({
+                success: false,
+                message: "You do not have permission to delete this role"
+            });
+        }
+
+        // 2. Safety Check: Active Participants for this Role
+        const Participant = require("../../models/participant.model");
+        const activeParticipants = await Participant.countDocuments({
+            roleId: roleId,
+            status: { $in: ['applied', 'approved'] }
+        });
+
+        if (activeParticipants > 0) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
+                success: false,
+                message: `Cannot delete role. There are ${activeParticipants} active participant(s).`
+            });
+        }
+
+        // 3. Soft Delete
+        role.isDeleted = true;
+        role.isActive = false;
+        await role.save();
+
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: "Role deleted successfully (Safe Delete)"
+        });
+
+    } catch (error) {
+        console.error("Delete Role Error:", error);
+        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: RESPONSE_MESSAGES.INTERNAL_SERVER_ERROR,
+            error: error.message
+        });
+    }
+};

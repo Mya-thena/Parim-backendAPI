@@ -5,7 +5,13 @@ const eventSchema = new mongoose.Schema(
     title: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
+      index: true
+    },
+    uniqueId: {
+      type: String,
+      unique: true,
+      index: true
     },
     shortDescription: {
       type: String,
@@ -31,19 +37,29 @@ const eventSchema = new mongoose.Schema(
       }
     },
     location: {
+      venue: {
+        type: String,
+        required: true
+      },
       address: {
         type: String,
         required: true
       },
       state: {
         type: String,
-        required: true
+        required: true,
+        index: true
       }
     },
     status: {
       type: String,
-      enum: ['draft', 'published', 'closed'], // Removed in_progress/completed/cancelled to match simple logic
+      enum: ['draft', 'published', 'closed'],
       default: 'draft'
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true
     },
     qrCode: {
       type: String,
@@ -66,9 +82,18 @@ const eventSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Auto-generate Unique ID
+eventSchema.pre('save', async function () {
+  if (!this.uniqueId) {
+    const random = Math.random().toString(36).substring(2, 7).toUpperCase();
+    this.uniqueId = `EVT-${random}`;
+  }
+});
+
 // Index for efficient queries
-eventSchema.index({ "eventDate.start": 1 }); // Updated field path
+eventSchema.index({ "eventDate.start": 1 });
 eventSchema.index({ status: 1 });
 eventSchema.index({ createdBy: 1 });
+// eventSchema.index({ uniqueId: 1 }); // Already defined in field definition
 
 module.exports = mongoose.model("Event", eventSchema);

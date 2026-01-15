@@ -29,6 +29,10 @@ app.use("/api/bank", bankRoutes);
 const eventRoutes = require("./src/modules/events/events.routes");
 app.use("/api/events", eventRoutes);
 
+// Import attendance routes
+const attendanceRoutes = require("./src/modules/attendance/attendance.routes");
+app.use("/api/attendance", attendanceRoutes);
+
 // Test route
 app.get("/", (req, res) => {
   res.json({

@@ -35,6 +35,14 @@ router.patch(
     eventsController.updateEvent
 );
 
+// Delete Event (Admin Only - Safe Delete)
+router.delete(
+    '/:eventId',
+    protect,
+    restrictTo('admin'),
+    eventsController.deleteEvent
+);
+
 // List Events (Search & Pagination support)
 router.get(
     '/',
@@ -76,6 +84,14 @@ router.patch(
     rolesController.updateRole
 );
 
+// Delete Role (Admin Only - Safe Delete)
+router.delete(
+    '/roles/:roleId',
+    protect,
+    restrictTo('admin'),
+    rolesController.deleteRole
+);
+
 // ==========================================
 // PARTICIPANT ROUTES
 // ==========================================
@@ -94,6 +110,38 @@ router.get(
     protect,
     restrictTo('admin'),
     participantsController.listParticipants
+);
+
+// Change Role (Staff - Pre-Approval Only)
+router.patch(
+    '/:eventId/participants/change-role',
+    protect,
+    restrictTo('user'),
+    participantsController.changeRole
+);
+
+// Withdraw Application (Staff)
+router.delete(
+    '/:eventId/participants/withdraw',
+    protect,
+    restrictTo('user'),
+    participantsController.withdrawApplication
+);
+
+// Approve Participant (Admin Only)
+router.patch(
+    '/participants/:participantId/approve',
+    protect,
+    restrictTo('admin'),
+    participantsController.approveParticipant
+);
+
+// Reject Participant (Admin Only)
+router.patch(
+    '/participants/:participantId/reject',
+    protect,
+    restrictTo('admin'),
+    participantsController.rejectParticipant
 );
 
 module.exports = router;
