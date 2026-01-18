@@ -33,59 +33,29 @@ exports.addBankDetails = async (req, res) => {
       });
     }
 
-    // Check if user already has bank details
-    const existingBank = await Bank.findOne({ userId });
-    if (existingBank) {
-      return res.status(400).json({
-        success: false,
-        message: "Bank details already exist for this user"
-      });
-    }
+    // Upsert bank details (Update if exists, Create if not)
+    const bankDetails = await Bank.findOneAndUpdate(
+      { userId },
+      {
+        userId,
+        bankName,
+        accountName,
+        accountNumber,
+        bvn
+      },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
 
-    // Validate account with Paystack (optional - can be skipped for MVP)
-    try {
-      const accountValidation = await resolveAccount(accountNumber, bankName);
-      if (!accountValidation.status) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid account details"
-        });
-      }
-    } catch (error) {
-      console.log("Paystack validation failed, proceeding with manual input");
-    }
-
-    // Validate BVN with Paystack (optional - can be skipped for MVP)
-    try {
-      const bvnValidation = await validateBVN(bvn);
-      if (!bvnValidation.status) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid BVN"
-        });
-      }
-    } catch (error) {
-      console.log("BVN validation failed, proceeding with manual input");
-    }
-
-    // Create bank details
-    const bankDetails = await Bank.create({
-      userId,
-      bankName,
-      accountName,
-      accountNumber,
-      bvn
-    });
-
-    res.status(201).json({
+    res.status(200).json({
       success: true,
-      message: "Bank details added successfully",
+      message: "Bank details updated successfully",
       data: {
         id: bankDetails._id,
         bankName: bankDetails.bankName,
         accountName: bankDetails.accountName,
         accountNumber: bankDetails.accountNumber,
-        createdAt: bankDetails.createdAt
+        createdAt: bankDetails.createdAt,
+        updatedAt: bankDetails.updatedAt
       }
     });
 

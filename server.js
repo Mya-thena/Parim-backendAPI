@@ -33,6 +33,18 @@ app.use("/api/events", eventRoutes);
 const attendanceRoutes = require("./src/modules/attendance/attendance.routes");
 app.use("/api/attendance", attendanceRoutes);
 
+// Import training routes
+const trainingRoutes = require("./src/modules/training/training.routes");
+app.use("/api/training", trainingRoutes);
+
+// Import payment routes
+const paymentRoutes = require("./src/modules/payments/payment.routes");
+app.use("/api/payments", paymentRoutes);
+
+// Import report routes
+const reportRoutes = require("./src/modules/reports/report.routes");
+app.use("/api/reports", reportRoutes);
+
 // Test route
 app.get("/", (req, res) => {
   res.json({

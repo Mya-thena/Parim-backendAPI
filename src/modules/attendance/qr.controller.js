@@ -59,16 +59,10 @@ exports.generateQRCode = async (req, res) => {
             );
         }
 
-        // Check if event is published
-        if (event.status !== "published" && event.status !== "in_progress") {
-            return errorResponse(
-                res,
-                "QR codes can only be generated for published or in-progress events",
-                HTTP_STATUS.BAD_REQUEST,
-                `Current status: ${event.status}`,
-                ERROR_CODES.EVENT_NOT_PUBLISHED
-            );
-        }
+        // Check if event is published (Relaxed: Allow admins to generate earlier if needed, just warn log)
+        // if (event.status !== "published" && event.status !== "in_progress") { ... }
+        // User requested flexibility: "not necessary its close or at the event time"
+        // We will allow generation for any active event (not deleted)
 
         // Deactivate any existing active QR for this event
         await QRCode.updateMany(

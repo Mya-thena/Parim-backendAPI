@@ -290,7 +290,7 @@ exports.login = async (req, res) => {
 ======================= */
 exports.resendOtp = async (req, res) => {
   try {
-    const { mail, userType = 'user' } = req.body;
+    const { mail, userType = 'user', type = 'verification' } = req.body;
 
     if (!mail) {
       return errorResponse(res, "Email is required", HTTP_STATUS.BAD_REQUEST);
@@ -303,7 +303,8 @@ exports.resendOtp = async (req, res) => {
       return errorResponse(res, RESPONSE_MESSAGES.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
 
-    if (user.isVerified) {
+    // Only check verification status if this is for initial verification
+    if (type === 'verification' && user.isVerified) {
       return errorResponse(res, RESPONSE_MESSAGES.ACCOUNT_ALREADY_VERIFIED, HTTP_STATUS.BAD_REQUEST);
     }
 
@@ -326,16 +327,19 @@ exports.resendOtp = async (req, res) => {
     // Record OTP request
     recordOTPRequest(mail, userType);
 
-    // Send OTP email
-    console.log(`[DEV] New OTP for ${mail}: ${otp}`); // Log for easy testing
+    // Send OTP email based on type
+    console.log(`[DEV] Resend ${type} OTP for ${mail}: ${otp}`);
     try {
-      await sendOtpMail(mail, otp);
+      if (type === 'password_reset') {
+        await sendPasswordResetMail(mail, otp);
+      } else {
+        await sendOtpMail(mail, otp);
+      }
     } catch (emailError) {
       console.log('Email service error (continuing anyway):', emailError.message);
-      // Continue with resend even if email fails for testing
     }
 
-    successResponse(res, null, RESPONSE_MESSAGES.OTP_SENT);
+    successResponse(res, null, type === 'password_reset' ? "Password reset OTP resent" : RESPONSE_MESSAGES.OTP_SENT);
 
   } catch (error) {
     console.error("Resend OTP error:", error);
