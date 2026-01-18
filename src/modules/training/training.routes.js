@@ -4,7 +4,42 @@ const router = express.Router();
 const trainingController = require('./training.controller');
 const { protect, restrictTo } = require('../../middlewares/rbac.middleware');
 
-// Create Training (Admin only)
+/**
+ * @swagger
+ * tags:
+ *   name: Training
+ *   description: Training module endpoints
+ */
+
+/**
+ * @swagger
+ * /api/training:
+ *   post:
+ *     summary: Create new training content
+ *     tags: [Training]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - description
+ *               - youtubeUrl
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               youtubeUrl:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Training created successfully
+ */
 router.post(
     '/',
     protect,
@@ -17,7 +52,32 @@ router.post(
     trainingController.createTraining
 );
 
-// Assign Training (Admin only)
+/**
+ * @swagger
+ * /api/training/assign:
+ *   post:
+ *     summary: Assign training to event
+ *     tags: [Training]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - eventId
+ *               - trainingId
+ *             properties:
+ *               eventId:
+ *                 type: string
+ *               trainingId:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Training assigned successfully
+ */
 router.post(
     '/assign',
     protect,
@@ -29,14 +89,48 @@ router.post(
     trainingController.assignTraining
 );
 
-// Get Event Trainings (Staff/Admin)
+/**
+ * @swagger
+ * /api/training/events/{eventId}:
+ *   get:
+ *     summary: Get trainings assigned to an event
+ *     tags: [Training]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of trainings
+ */
 router.get(
     '/events/:eventId',
     protect,
     trainingController.getEventTrainings
 );
 
-// Delete Training (Admin only)
+/**
+ * @swagger
+ * /api/training/{trainingId}:
+ *   delete:
+ *     summary: Soft delete training
+ *     tags: [Training]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: trainingId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Training deleted successfully
+ */
 router.delete(
     '/:trainingId',
     protect,
