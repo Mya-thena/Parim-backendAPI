@@ -23,6 +23,7 @@ dist/
 build/
 .history/
 oau-rrxb-ffi
+scripts/
 
 test-api-flow.js
 
@@ -41,3 +42,9 @@ migration_output.txt
 
 sprint-3-api-flow.md
 sprint-3-tasks.md
+
+create-admin.js
+sprint-4-api-flow.md
+sprint-4-tasks.md
+test_sprint4_output.txt
+test-sprint-4.js

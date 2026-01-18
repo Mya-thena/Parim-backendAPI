@@ -25,6 +25,11 @@ const adminSchema = new mongoose.Schema(
       required: true
     },
 
+    profilePicture: {
+      type: String,
+      default: ""
+    },
+
     role: {
       type: String,
       enum: ['super_admin', 'admin', 'event_manager'],

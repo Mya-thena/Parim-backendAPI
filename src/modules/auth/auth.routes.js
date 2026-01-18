@@ -364,4 +364,34 @@ router.get("/test", (req, res) => {
   });
 });
 
+/**
+ * @swagger
+ * /api/auth/profile:
+ *   patch:
+ *     summary: Update current user's profile
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fullName:
+ *                 type: string
+ *               phoneNumber:
+ *                 type: string
+ *               profilePicture:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               dateOfBirth:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated
+ */
+router.patch("/profile", protect, authController.updateProfile);
+
 module.exports = router;
