@@ -2,7 +2,7 @@
 const swaggerJSDoc = require("swagger-jsdoc");
 require("dotenv").config();
 
-const servers = process.env.NODE_ENV === "development" ? `http://localhost:${process.env.PORT}`: process.env.PROD_URL;
+const servers = process.env.NODE_ENV === "development" ? `http://localhost:${process.env.PORT}` : process.env.PROD_URL;
 
 const options = {
 	definition: {
@@ -61,7 +61,7 @@ const options = {
 		},
 		security: [{ bearerAuth: [] }],
 	},
-	apis: ["./src/modules/auth/*.js"], // Path to route files
+	apis: ["./src/modules/**/*.routes.js"], // Path to route files
 };
 
 const swaggerSpec = swaggerJSDoc(options);

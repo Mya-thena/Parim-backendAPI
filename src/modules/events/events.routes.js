@@ -7,11 +7,64 @@ const participantsController = require('./participants.controller');
 
 const { protect, restrictTo } = require('../../middlewares/rbac.middleware');
 
-// ==========================================
-// EVENT ROUTES
-// ==========================================
+/**
+ * @swagger
+ * tags:
+ *   name: Events
+ *   description: Event management endpoints
+ */
 
-// Create Event (Admin Only)
+/**
+ * @swagger
+ * /api/events:
+ *   post:
+ *     summary: Create a new event
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - shortDescription
+ *               - longDescription
+ *               - eventDate
+ *               - location
+ *             properties:
+ *               title:
+ *                 type: string
+ *               shortDescription:
+ *                 type: string
+ *               longDescription:
+ *                 type: string
+ *               bannerImage:
+ *                 type: string
+ *               eventDate:
+ *                 type: object
+ *                 properties:
+ *                   start:
+ *                     type: string
+ *                     format: date-time
+ *                   end:
+ *                     type: string
+ *                     format: date-time
+ *               location:
+ *                 type: object
+ *                 properties:
+ *                   venue:
+ *                     type: string
+ *                   address:
+ *                     type: string
+ *                   state:
+ *                     type: string
+ *     responses:
+ *       201:
+ *         description: Event created successfully
+ */
 router.post(
     '/',
     protect,
@@ -19,7 +72,36 @@ router.post(
     eventsController.createEvent
 );
 
-// Update Status (Admin Only)
+/**
+ * @swagger
+ * /api/events/{eventId}/status:
+ *   patch:
+ *     summary: Update event status
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [draft, published, closed]
+ *     responses:
+ *       200:
+ *         description: Status updated successfully
+ */
 router.patch(
     '/:eventId/status',
     protect,
@@ -27,7 +109,38 @@ router.patch(
     eventsController.updateEventStatus
 );
 
-// Update Event Details (Admin Only)
+/**
+ * @swagger
+ * /api/events/{eventId}:
+ *   patch:
+ *     summary: Update event details
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               shortDescription:
+ *                 type: string
+ *               longDescription:
+ *                 type: string
+ *               bannerImage:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Event updated successfully
+ */
 router.patch(
     '/:eventId',
     protect,
@@ -35,7 +148,24 @@ router.patch(
     eventsController.updateEvent
 );
 
-// Delete Event (Admin Only - Safe Delete)
+/**
+ * @swagger
+ * /api/events/{eventId}:
+ *   delete:
+ *     summary: Safe delete event (Admin only)
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Event deleted successfully
+ */
 router.delete(
     '/:eventId',
     protect,
@@ -43,14 +173,60 @@ router.delete(
     eventsController.deleteEvent
 );
 
-// List Events (Search & Pagination support)
+/**
+ * @swagger
+ * /api/events:
+ *   get:
+ *     summary: List events (Staff sees published, Admin filters)
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [draft, published, closed]
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of events
+ */
 router.get(
     '/',
     protect,
     eventsController.listEvents
 );
 
-// Get Event by Unique ID (Search/Share Link)
+/**
+ * @swagger
+ * /api/events/unique/{uniqueId}:
+ *   get:
+ *     summary: Get event by public unique ID
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: uniqueId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Event details
+ */
 router.get(
     '/unique/:uniqueId',
     protect,
@@ -61,7 +237,45 @@ router.get(
 // ROLE ROUTES
 // ==========================================
 
-// Create Role (Admin Only)
+/**
+ * @swagger
+ * /api/events/{eventId}/roles:
+ *   post:
+ *     summary: Add role to event
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - roleName
+ *               - price
+ *               - capacity
+ *             properties:
+ *               roleName:
+ *                 type: string
+ *               roleDescription:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               capacity:
+ *                 type: integer
+ *               duration:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Role created successfully
+ */
 router.post(
     '/:eventId/roles',
     protect,
@@ -69,14 +283,60 @@ router.post(
     rolesController.createRole
 );
 
-// List Roles (Staff & Admin)
+/**
+ * @swagger
+ * /api/events/{eventId}/roles:
+ *   get:
+ *     summary: List roles for an event
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of roles
+ */
 router.get(
     '/:eventId/roles',
     protect,
     rolesController.listRoles
 );
 
-// Update Role (Admin Only)
+/**
+ * @swagger
+ * /api/events/roles/{roleId}:
+ *   patch:
+ *     summary: Update role details
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roleId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               roleName:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               capacity:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Role updated successfully
+ */
 router.patch(
     '/roles/:roleId',
     protect,
@@ -84,7 +344,24 @@ router.patch(
     rolesController.updateRole
 );
 
-// Delete Role (Admin Only - Safe Delete)
+/**
+ * @swagger
+ * /api/events/roles/{roleId}:
+ *   delete:
+ *     summary: Safe delete role
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roleId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Role deleted successfully
+ */
 router.delete(
     '/roles/:roleId',
     protect,
@@ -96,7 +373,35 @@ router.delete(
 // PARTICIPANT ROUTES
 // ==========================================
 
-// Apply to Event (Staff Only)
+/**
+ * @swagger
+ * /api/events/{eventId}/apply:
+ *   post:
+ *     summary: Apply for a role in an event
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - roleId
+ *             properties:
+ *               roleId:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Application submitted successfully
+ */
 router.post(
     '/:eventId/apply',
     protect,
@@ -104,7 +409,24 @@ router.post(
     participantsController.applyToEvent
 );
 
-// List Participants (Admin Only)
+/**
+ * @swagger
+ * /api/events/{eventId}/participants:
+ *   get:
+ *     summary: List participants for an event (Admin)
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of participants
+ */
 router.get(
     '/:eventId/participants',
     protect,
@@ -112,7 +434,35 @@ router.get(
     participantsController.listParticipants
 );
 
-// Change Role (Staff - Pre-Approval Only)
+/**
+ * @swagger
+ * /api/events/{eventId}/participants/change-role:
+ *   patch:
+ *     summary: Change applied role (Pre-approval)
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - newRoleId
+ *             properties:
+ *               newRoleId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Role changed successfully
+ */
 router.patch(
     '/:eventId/participants/change-role',
     protect,
@@ -120,7 +470,24 @@ router.patch(
     participantsController.changeRole
 );
 
-// Withdraw Application (Staff)
+/**
+ * @swagger
+ * /api/events/{eventId}/participants/withdraw:
+ *   delete:
+ *     summary: Withdraw application
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Application withdrawn
+ */
 router.delete(
     '/:eventId/participants/withdraw',
     protect,
@@ -128,7 +495,24 @@ router.delete(
     participantsController.withdrawApplication
 );
 
-// Approve Participant (Admin Only)
+/**
+ * @swagger
+ * /api/events/participants/{participantId}/approve:
+ *   patch:
+ *     summary: Approve participant (Admin)
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: participantId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Participant approved
+ */
 router.patch(
     '/participants/:participantId/approve',
     protect,
@@ -136,7 +520,32 @@ router.patch(
     participantsController.approveParticipant
 );
 
-// Reject Participant (Admin Only)
+/**
+ * @swagger
+ * /api/events/participants/{participantId}/reject:
+ *   patch:
+ *     summary: Reject participant (Admin)
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: participantId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Participant rejected
+ */
 router.patch(
     '/participants/:participantId/reject',
     protect,

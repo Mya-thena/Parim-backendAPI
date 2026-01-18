@@ -178,7 +178,12 @@ exports.listEvents = async (req, res) => {
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(parseInt(limit))
-            .populate('createdBy', 'fullName mail'); // Creator details
+            .populate('createdBy', 'fullName mail') // Creator details
+            .populate({
+                path: 'roles',
+                match: { isActive: true, isDeleted: false },
+                select: 'roleName price capacity duration roleDescription'
+            });
 
         const totalEvents = await Event.countDocuments(query);
 
@@ -209,7 +214,13 @@ exports.listEvents = async (req, res) => {
 exports.getEventByUniqueId = async (req, res) => {
     try {
         const { uniqueId } = req.params;
-        const event = await Event.findOne({ uniqueId }).populate('createdBy', 'fullName mail');
+        const event = await Event.findOne({ uniqueId })
+            .populate('createdBy', 'fullName mail')
+            .populate({
+                path: 'roles',
+                match: { isActive: true, isDeleted: false },
+                select: 'roleName price capacity duration roleDescription'
+            });
 
         if (!event) {
             return res.status(HTTP_STATUS.NOT_FOUND).json({

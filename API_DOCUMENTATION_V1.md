@@ -102,7 +102,13 @@
 
 ### Add Role (Admin)
 `POST /:eventId/roles`
-- **Body**: `{ roleName, price, quantity, description }`
+- **Body**: `{ roleName, roleDescription, price, capacity, duration }`
+- **Fields**:
+  - `roleName` (string, required)
+  - `price` (number, required, >= 0)
+  - `capacity` (number, required, >= 1)
+  - `roleDescription` (string, optional)
+  - `duration` (string, optional, e.g. "5hrs")
 
 ### Apply for Role (Staff)
 `POST /:eventId/apply`

@@ -200,6 +200,10 @@ router.post("/login", authController.login);
  *                 type: string
  *                 enum: [user, admin]
  *                 example: user
+ *               type:
+ *                 type: string
+ *                 enum: [verification, password_reset]
+ *                 default: verification
  *     responses:
  *       200:
  *         description: OTP sent successfully
@@ -392,6 +396,6 @@ router.get("/test", (req, res) => {
  *       200:
  *         description: Profile updated
  */
-router.patch("/profile", protect, authController.updateProfile);
+// router.patch("/profile", require("../../middlewares/rbac.middleware").protect, authController.updateProfile);
 
 module.exports = router;
