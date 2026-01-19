@@ -14,8 +14,9 @@ const bankSchema = new mongoose.Schema(
     },
 
     accountName: {
-  type: String
-},
+      type: String,
+      required: true
+    },
 
 
     accountNumber: {
@@ -24,11 +25,6 @@ const bankSchema = new mongoose.Schema(
       length: 10
     },
 
-    bvn: {
-      type: String,
-      required: true,
-      length: 11
-    }
   },
   { timestamps: true }
 );

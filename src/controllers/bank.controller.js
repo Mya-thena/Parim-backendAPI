@@ -7,13 +7,13 @@ const { resolveAccount, validateBVN } = require("../services/paystack.service");
 exports.addBankDetails = async (req, res) => {
   try {
     const userId = req.user.id; // From auth middleware
-    const { bankName, accountName, accountNumber, bvn } = req.body;
+    const { bankName, accountName, accountNumber } = req.body;
 
     // Validate input
-    if (!bankName || !accountNumber || !bvn) {
+    if (!bankName || !accountNumber || !accountName) {
       return res.status(400).json({
         success: false,
-        message: "Bank name, account number, and BVN are required"
+        message: "Bank name, account number, and account name are required"
       });
     }
 
@@ -25,14 +25,6 @@ exports.addBankDetails = async (req, res) => {
       });
     }
 
-    // Validate BVN length (11 digits)
-    if (bvn.length !== 11 || !/^\d{11}$/.test(bvn)) {
-      return res.status(400).json({
-        success: false,
-        message: "BVN must be exactly 11 digits"
-      });
-    }
-
     // Upsert bank details (Update if exists, Create if not)
     const bankDetails = await Bank.findOneAndUpdate(
       { userId },
@@ -40,8 +32,7 @@ exports.addBankDetails = async (req, res) => {
         userId,
         bankName,
         accountName,
-        accountNumber,
-        bvn
+        accountNumber
       },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
