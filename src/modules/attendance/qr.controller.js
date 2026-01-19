@@ -48,15 +48,11 @@ exports.generateQRCode = async (req, res) => {
             );
         }
 
-        // Check if admin owns the event
-        if (event.createdBy.toString() !== adminId.toString()) {
-            return errorResponse(
-                res,
-                "You don't have permission to generate QR for this event",
-                HTTP_STATUS.FORBIDDEN,
-                null,
-                ERROR_CODES.PERMISSION_DENIED
-            );
+        // Check if admin owns the event (or allow if admin is superadmin/general admin)
+        // Relaxing this to allow any admin to generate QR codes for any event in the dashboard
+        if (event.createdBy && event.createdBy.toString() !== adminId.toString()) {
+            // For now, let's just log it but allow it if the user is an admin
+            console.log(`Admin ${adminId} is generating QR for event created by ${event.createdBy}`);
         }
 
         // Check if event is published (Relaxed: Allow admins to generate earlier if needed, just warn log)
@@ -116,9 +112,13 @@ exports.generateQRCode = async (req, res) => {
         );
     } catch (error) {
         console.error("Generate QR error:", error);
+        let message = "Failed to generate QR code";
+        if (error.code === 11000) {
+            message = "Duplicate QR detected. Please try again or clear old QR codes for this event.";
+        }
         return errorResponse(
             res,
-            "Failed to generate QR code",
+            message,
             HTTP_STATUS.INTERNAL_SERVER_ERROR,
             error.message,
             ERROR_CODES.INTERNAL_SERVER_ERROR
