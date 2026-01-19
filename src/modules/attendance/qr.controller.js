@@ -112,13 +112,9 @@ exports.generateQRCode = async (req, res) => {
         );
     } catch (error) {
         console.error("Generate QR error:", error);
-        let message = "Failed to generate QR code";
-        if (error.code === 11000) {
-            message = "Duplicate QR detected. Please try again or clear old QR codes for this event.";
-        }
         return errorResponse(
             res,
-            message,
+            "Failed to generate QR code",
             HTTP_STATUS.INTERNAL_SERVER_ERROR,
             error.message,
             ERROR_CODES.INTERNAL_SERVER_ERROR
