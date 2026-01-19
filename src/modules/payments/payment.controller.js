@@ -24,7 +24,7 @@ exports.calculatePayments = async (req, res) => {
         }).populate('roleId');
 
         if (!completedAttendances.length) {
-            return res.status(404).json({ success: false, message: 'No completed attendance records found for this event' });
+            return res.status(200).json({ success: true, message: 'No completed attendance records found for this event to calculate payments for', data: { generatedCount: 0, totalAmount: "0.00" } });
         }
 
         let generatedCount = 0;
