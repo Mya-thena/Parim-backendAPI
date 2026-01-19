@@ -45,6 +45,10 @@ app.use("/api/payments", paymentRoutes);
 const reportRoutes = require("./src/modules/reports/report.routes");
 app.use("/api/reports", reportRoutes);
 
+// Import dashboard routes
+const dashboardRoutes = require("./src/modules/dashboard/dashboard.routes");
+app.use("/api/dashboard", dashboardRoutes);
+
 // Test route
 app.get("/", (req, res) => {
   res.json({

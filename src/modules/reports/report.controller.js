@@ -90,7 +90,7 @@ exports.exportAttendanceCSV = async (req, res) => {
         const fields = ['Staff Name', 'Email', 'Role', 'Status', 'Check In', 'Check Out', 'Duration'];
         const data = attendances.map(a => ({
             'Staff Name': a.staffId ? a.staffId.fullName : 'Unknown',
-            'Email': a.staffId ? a.staffId.email : 'Unknown',
+            'Email': a.staffId ? a.staffId.mail : 'Unknown',
             'Role': a.roleId ? a.roleId.roleName : 'Unknown',
             'Status': a.status,
             'Check In': a.checkIn && a.checkIn.time ? new Date(a.checkIn.time).toLocaleString() : '-',

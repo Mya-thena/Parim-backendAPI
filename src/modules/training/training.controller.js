@@ -142,3 +142,23 @@ exports.deleteTraining = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server Error', error: error.message });
     }
 };
+
+/**
+ * @desc    Get all training modules
+ * @route   GET /api/training
+ * @access  Admin
+ */
+exports.getAllTrainings = async (req, res) => {
+    try {
+        const trainings = await Training.find({ isActive: true })
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: trainings
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+    }
+};
