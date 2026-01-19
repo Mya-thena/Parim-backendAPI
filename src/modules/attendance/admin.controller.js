@@ -165,7 +165,7 @@ exports.getAttendanceDetails = async (req, res) => {
 
         // Get attendance records
         const attendances = await Attendance.find(query)
-            .populate("staffId", "fullName email phoneNumber")
+            .populate("staffId", "fullName mail phoneNumber")
             .populate("roleId", "roleName")
             .sort({ "checkIn.time": -1, createdAt: -1 })
             .skip(skip)
@@ -177,7 +177,7 @@ exports.getAttendanceDetails = async (req, res) => {
             staff: att.staffId ? {
                 id: att.staffId._id,
                 fullName: att.staffId.fullName,
-                email: att.staffId.email,
+                email: att.staffId.mail,
                 phoneNumber: att.staffId.phoneNumber
             } : null,
             role: att.roleId?.roleName || "Unknown",
