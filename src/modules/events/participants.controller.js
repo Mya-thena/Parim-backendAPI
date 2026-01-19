@@ -105,7 +105,7 @@ exports.listParticipants = async (req, res) => {
 
         // Fetch all participants for the event
         const participants = await Participant.find({ eventId })
-            .populate('staffId', 'fullName email phoneNumber profilePicture')
+            .populate('staffId', 'fullName mail phoneNumber profilePicture')
             .populate('roleId', 'roleName')
             .sort({ appliedAt: -1 });
 
@@ -120,7 +120,7 @@ exports.listParticipants = async (req, res) => {
                 staff: curr.staffId ? {
                     id: curr.staffId._id,
                     fullName: curr.staffId.fullName,
-                    email: curr.staffId.email,
+                    email: curr.staffId.mail,
                     phoneNumber: curr.staffId.phoneNumber,
                     profilePicture: curr.staffId.profilePicture
                 } : null,
@@ -335,7 +335,7 @@ exports.approveParticipant = async (req, res) => {
         // Find participant
         const participant = await Participant.findById(participantId)
             .populate("eventId")
-            .populate("staffId", "fullName email");
+            .populate("staffId", "fullName mail");
 
         if (!participant) {
             return errorResponse(
@@ -405,7 +405,7 @@ exports.approveParticipant = async (req, res) => {
                 staff: {
                     id: participant.staffId._id,
                     fullName: participant.staffId.fullName,
-                    email: participant.staffId.email
+                    email: participant.staffId.mail
                 }
             },
             "Participant approved successfully"
@@ -433,7 +433,7 @@ exports.rejectParticipant = async (req, res) => {
         // Find participant
         const participant = await Participant.findById(participantId)
             .populate("eventId")
-            .populate("staffId", "fullName email");
+            .populate("staffId", "fullName mail");
 
         if (!participant) {
             return errorResponse(
@@ -489,7 +489,7 @@ exports.rejectParticipant = async (req, res) => {
                 staff: {
                     id: participant.staffId._id,
                     fullName: participant.staffId.fullName,
-                    email: participant.staffId.email
+                    email: participant.staffId.mail
                 }
             },
             "Participant rejected successfully"
