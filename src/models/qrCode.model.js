@@ -28,8 +28,8 @@ const qrCodeSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-// Indexes for efficient queries - One active QR per event
-qrCodeSchema.index({ eventId: 1 }, { unique: true });
+// Indexes for efficient queries
+qrCodeSchema.index({ eventId: 1 });
 
 // Method to check if QR is expired
 qrCodeSchema.methods.isExpired = function () {
