@@ -13,30 +13,6 @@ const { protect, restrictTo } = require('../../middlewares/rbac.middleware');
 
 /**
  * @swagger
- * /api/training:
- *   post:
- *     summary: Create new training content
- *     tags: [Training]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - title
- *               - description
- *               - youtubeUrl
- *             properties:
- *               title:
- *                 type: string
- *               description:
- *                 type: string
- *               youtubeUrl:
- *                 type: string
- *     responses:
  *       201:
  *         description: Training created successfully
  */
@@ -50,6 +26,25 @@ router.post(
         check('youtubeUrl', 'YouTube URL is required').not().isEmpty()
     ],
     trainingController.createTraining
+);
+
+/**
+ * @swagger
+ * /api/training:
+ *   get:
+ *     summary: Get all training content
+ *     tags: [Training]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of trainings
+ */
+router.get(
+    '/',
+    protect,
+    restrictTo('admin'),
+    trainingController.getAllTrainings
 );
 
 /**
