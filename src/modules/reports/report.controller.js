@@ -79,7 +79,7 @@ exports.exportAttendanceCSV = async (req, res) => {
         const { eventId } = req.params;
 
         const attendances = await Attendance.find({ eventId })
-            .populate('staffId', 'fullName email')
+            .populate('staffId', 'fullName mail')
             .populate('roleId', 'roleName')
             .sort({ 'staffId.fullName': 1 }); // Sort by name
 
