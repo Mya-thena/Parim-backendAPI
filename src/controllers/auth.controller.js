@@ -95,6 +95,23 @@ exports.registerUser = async (req, res) => {
 
   } catch (error) {
     console.error("User registration error:", error);
+
+    // Check for duplicate key errors (code 11000)
+    if (error.code === 11000) {
+      let field = Object.keys(error.keyPattern || {})[0] || 'account';
+      let message = RESPONSE_MESSAGES.EMAIL_EXISTS;
+
+      if (field === 'staffId') {
+        message = "A problem occurred with staff ID generation. Please try again.";
+      } else if (field === 'mail') {
+        message = RESPONSE_MESSAGES.EMAIL_EXISTS;
+      } else {
+        message = `An account with this ${field} already exists.`;
+      }
+
+      return errorResponse(res, message, HTTP_STATUS.CONFLICT);
+    }
+
     errorResponse(res, RESPONSE_MESSAGES.INTERNAL_SERVER_ERROR, HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
 };
@@ -138,15 +155,21 @@ exports.registerAdmin = async (req, res) => {
     const hashedPassword = await bcrypt.hash(createPassword, 12);
 
     // Create admin (NOT verified yet)
-    const admin = await Admin.create({
-      fullName,
-      mail,
-      phoneNumber,
-      password: hashedPassword,
-      role,
-      permissions: [], // Default to empty
-      isVerified: false
-    });
+    let admin;
+    try {
+      admin = await Admin.create({
+        fullName,
+        mail,
+        phoneNumber,
+        password: hashedPassword,
+        role,
+        permissions: [], // Default to empty
+        isVerified: false
+      });
+    } catch (createError) {
+      console.error('Admin creation error:', createError);
+      throw createError;
+    }
 
     // Generate OTP
     const { otp, expiresAt } = generateOTPWithExpiry();
@@ -171,6 +194,21 @@ exports.registerAdmin = async (req, res) => {
 
   } catch (error) {
     console.error("Admin registration error:", error);
+
+    // Check for duplicate key errors (code 11000)
+    if (error.code === 11000) {
+      let field = Object.keys(error.keyPattern || {})[0] || 'account';
+      let message = RESPONSE_MESSAGES.EMAIL_EXISTS;
+
+      if (field === 'mail') {
+        message = RESPONSE_MESSAGES.EMAIL_EXISTS;
+      } else {
+        message = `An account with this ${field} already exists.`;
+      }
+
+      return errorResponse(res, message, HTTP_STATUS.CONFLICT);
+    }
+
     errorResponse(res, RESPONSE_MESSAGES.INTERNAL_SERVER_ERROR, HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
 };

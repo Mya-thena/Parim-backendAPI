@@ -147,8 +147,21 @@ userSchema.virtual('isLocked').get(function () {
 // Pre-save middleware to generate staff ID
 userSchema.pre('save', async function () {
   if (this.isNew && !this.staffId) {
-    const count = await this.constructor.countDocuments();
-    this.staffId = `STF${String(count + 1).padStart(6, '0')}`;
+    // Find the user with the highest staffId
+    const lastUser = await this.constructor.findOne({}, { staffId: 1 })
+      .sort({ staffId: -1 })
+      .lean();
+
+    let nextNumber = 1;
+    if (lastUser && lastUser.staffId) {
+      // Extract number from STFXXXXXX
+      const lastNumber = parseInt(lastUser.staffId.replace('STF', ''), 10);
+      if (!isNaN(lastNumber)) {
+        nextNumber = lastNumber + 1;
+      }
+    }
+
+    this.staffId = `STF${String(nextNumber).padStart(6, '0')}`;
   }
 });
 
