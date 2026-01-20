@@ -368,12 +368,13 @@ router.get("/test", (req, res) => {
   });
 });
 
+
 /**
  * @swagger
  * /api/auth/profile:
  *   patch:
  *     summary: Update current user's profile
- *     tags: [Auth]
+ *     tags: [Authentication]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -386,16 +387,13 @@ router.get("/test", (req, res) => {
  *                 type: string
  *               phoneNumber:
  *                 type: string
- *               profilePicture:
- *                 type: string
- *               address:
- *                 type: string
- *               dateOfBirth:
- *                 type: string
  *     responses:
  *       200:
  *         description: Profile updated
  */
-// router.patch("/profile", require("../../middlewares/rbac.middleware").protect, authController.updateProfile);
+router.patch("/profile",
+  require("../../middlewares/rbac.middleware").protect,
+  authController.updateProfile
+);
 
 module.exports = router;

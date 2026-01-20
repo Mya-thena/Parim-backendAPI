@@ -66,19 +66,42 @@ exports.getLiveStats = async (req, res) => {
         stats.forEach(stat => {
             const status = stat._id.toLowerCase();
             if (status === "assigned") summary.assigned = stat.count;
-            if (status === "checked_in") summary.checkedIn = stat.count;
+            if (status === "checked_in") summary.checkedIn += stat.count; // Add to checkedIn
+            if (status === "active") summary.checkedIn += stat.count; // Active counts as checkedIn
             if (status === "active") summary.active = stat.count;
             if (status === "completed") summary.completed = stat.count;
             if (status === "absent") summary.absent = stat.count;
         });
 
+        // 6. Get Recent Activity (Latest 10 check-ins)
+        const recentCheckIns = await Attendance.find({
+            eventId: event._id,
+            status: { $in: ["CHECKED_IN", "ACTIVE", "COMPLETED"] }
+        })
+            .populate("staffId", "fullName mail")
+            .sort({ "checkIn.time": -1 })
+            .limit(10)
+            .lean();
+
+        const formattedRecent = recentCheckIns.map(att => ({
+            attendanceId: att._id,
+            staff: {
+                fullName: att.staffId?.fullName || "Unknown",
+                email: att.staffId?.mail || "Unknown"
+            },
+            checkInTime: att.checkIn?.time || att.updatedAt,
+            status: att.status
+        }));
+
         // Calculate percentages
-        const attendanceCount = summary.active + summary.checkedIn + summary.completed;
-        const attendanceRate = totalApproved > 0
-            ? ((attendanceCount / totalApproved) * 100).toFixed(1)
+        const attendanceCount = summary.checkedIn + summary.completed;
+        const totalPossible = totalApproved || summary.assigned + attendanceCount + summary.absent;
+
+        const attendanceRate = totalPossible > 0
+            ? ((attendanceCount / totalPossible) * 100).toFixed(1)
             : 0;
-        const completionRate = totalApproved > 0
-            ? ((summary.completed / totalApproved) * 100).toFixed(1)
+        const completionRate = totalPossible > 0
+            ? ((summary.completed / totalPossible) * 100).toFixed(1)
             : 0;
 
         return successResponse(
@@ -87,6 +110,7 @@ exports.getLiveStats = async (req, res) => {
                 eventId: event._id,
                 eventTitle: event.title,
                 summary,
+                recentCheckIns: formattedRecent, // Added recent activity
                 percentages: {
                     attendance: parseFloat(attendanceRate),
                     completion: parseFloat(completionRate)

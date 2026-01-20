@@ -611,3 +611,40 @@ exports.resetPassword = async (req, res) => {
     errorResponse(res, RESPONSE_MESSAGES.INTERNAL_SERVER_ERROR, HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
 };
+
+/* =======================
+   UPDATE PROFILE (Common for both)
+======================= */
+exports.updateProfile = async (req, res) => {
+  try {
+    const { fullName, phoneNumber } = req.body;
+    const Model = req.userType === 'admin' ? Admin : User;
+
+    const updatedUser = await Model.findByIdAndUpdate(
+      req.user._id,
+      {
+        $set: {
+          ...(fullName && { fullName }),
+          ...(phoneNumber && { phoneNumber }),
+        }
+      },
+      { new: true, runValidators: true, select: "-password -refreshTokens -otp -otpExpiresAt" }
+    );
+
+    if (!updatedUser) {
+      return errorResponse(res, RESPONSE_MESSAGES.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    }
+
+    successResponse(res, updatedUser, "Profile updated successfully");
+
+  } catch (error) {
+    console.error("Update profile error:", error);
+
+    // Check for duplicate key errors (e.g. phone number if unique)
+    if (error.code === 11000) {
+      return errorResponse(res, "This information is already in use by another account", HTTP_STATUS.CONFLICT);
+    }
+
+    errorResponse(res, RESPONSE_MESSAGES.INTERNAL_SERVER_ERROR, HTTP_STATUS.INTERNAL_SERVER_ERROR);
+  }
+};
